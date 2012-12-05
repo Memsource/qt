@@ -1572,7 +1572,7 @@ void QTextEngine::itemize() const
         case QChar::Nbsp:
             if (option.flags() & QTextOption::ShowTabsAndSpaces) {
                 analysis->script = QUnicodeTables::Common;
-                analysis->flags = QScriptAnalysis::Space;
+                analysis->flags = (*uc) == 32 ? QScriptAnalysis::Space : QScriptAnalysis::NonBreakingSpace;
                 analysis->bidiLevel = control.baseLevel();
                 break;
             }

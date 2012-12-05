@@ -2322,6 +2322,11 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
         QFont f = eng->font(si);
         QTextCharFormat format;
 
+		QFixed itemY = y - si.ascent;
+        if (format.verticalAlignment() == QTextCharFormat::AlignTop) {
+            itemY = y - lineBase;
+        }
+
         if (eng->hasFormats() || selection) {
             format = eng->format(&si);
             if (suppressColors) {
@@ -2351,11 +2356,6 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
             if (eng->hasFormats()) {
                 p->save();
                 if (si.analysis.flags == QScriptAnalysis::Object && eng->block.docHandle()) {
-                    QFixed itemY = y - si.ascent;
-                    if (format.verticalAlignment() == QTextCharFormat::AlignTop) {
-                        itemY = y - lineBase;
-                    }
-
                     QRectF itemRect(iterator.x.toReal(), itemY.toReal(), iterator.itemWidth.toReal(), si.height().toReal());
 
                     eng->docLayout()->drawInlineObject(p, itemRect,
@@ -2457,12 +2457,22 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
                 p->drawTextItem(pos, gf);
             }
         }
-        if (si.analysis.flags == QScriptAnalysis::Space
+        if ((si.analysis.flags == QScriptAnalysis::Space || si.analysis.flags == QScriptAnalysis::NonBreakingSpace)
             && (eng->option.flags() & QTextOption::ShowTabsAndSpaces)) {
             QBrush c = format.foreground();
             if (c.style() != Qt::NoBrush)
                 p->setPen(c.color());
-            QChar visualSpace((ushort)0xb7);
+                
+			QChar visualSpace((ushort)0xb7);
+			if( si.analysis.flags == QScriptAnalysis::Space )
+			{
+				visualSpace = QChar((ushort)0xb7);
+			}
+			else
+			{
+				visualSpace = QChar((ushort)0xb0);
+			}
+			
             p->drawText(QPointF(iterator.x.toReal(), itemBaseLine.toReal()), visualSpace);
             p->setPen(pen);
         }

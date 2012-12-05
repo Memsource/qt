@@ -125,13 +125,14 @@ struct Q_AUTOTEST_EXPORT QScriptAnalysis
         LineOrParagraphSeparator = 4,
         Space = 5,
         SpaceTabOrObject = Space,
-        Tab = 6,
+		NonBreakingSpace = 6,
+        Tab = 7,
         TabOrObject = Tab,
-        Object = 7
+        Object = 8
     };
     unsigned short script    : 7;
     unsigned short bidiLevel : 6;  // Unicode Bidi algorithm embedding level (0-61)
-    unsigned short flags     : 3;
+    unsigned short flags     : 4;
     inline bool operator == (const QScriptAnalysis &other) const {
         return script == other.script && bidiLevel == other.bidiLevel && flags == other.flags;
     }
