@@ -288,6 +288,7 @@ Q_CORE_EXPORT QString qAppName();                // get application name
 #if defined(Q_WS_WIN) && !defined(QT_NO_DEBUG_STREAM)
 Q_CORE_EXPORT QString decodeMSG(const MSG &);
 Q_CORE_EXPORT QDebug operator<<(QDebug, const MSG &);
+void printMessage(const QString& message);
 #endif
 
 QT_END_NAMESPACE
