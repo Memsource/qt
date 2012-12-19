@@ -59,6 +59,7 @@ extern void qt_wince_hide_taskbar(HWND hwnd); //defined in qguifunctions_wince.c
 #endif
 
 #include "qapplication.h"
+#include "qcoreapplication.h"
 #include "qdesktopwidget.h"
 #include "qevent.h"
 #include "private/qeventdispatcher_win_p.h"
@@ -1782,6 +1783,7 @@ extern "C" LRESULT QT_WIN_CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wPa
         case WM_CHAR: {
             MSG msg1;
             bool anyMsg = PeekMessage(&msg1, msg.hwnd, 0, 0, PM_NOREMOVE);
+
             if (anyMsg && msg1.message == WM_DEADCHAR) {
                 result = true; // consume event since there is a dead char next
                 break;

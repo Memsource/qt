@@ -49,6 +49,7 @@
 #include <qwidget.h>
 #include <qapplication.h>
 #include <ctype.h>
+#include <sstream>
 
 QT_BEGIN_NAMESPACE
 
@@ -482,7 +483,8 @@ static inline int toKeyOrUnicode(int vk, int scancode, unsigned char *kbdBuffer,
     Q_ASSERT(vk > 0 && vk < 256);
     int code = 0;
     QChar unicodeBuffer[5];
-    int res = ToUnicode(vk, scancode, kbdBuffer, reinterpret_cast<LPWSTR>(unicodeBuffer), 5, 0);
+    int res = vk;
+    
     // When Ctrl modifier is used ToUnicode does not return correct values. In order to assign the
     // right key the control modifier is removed for just that function if the previous call failed.
     if (res == 0 && kbdBuffer[VK_CONTROL]) {
@@ -992,6 +994,7 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
                 break;
             }
         }
+
 
         // KEYDOWN ---------------------------------------------------------------------------------
         if (msgType == WM_KEYDOWN || msgType == WM_IME_KEYDOWN || msgType == WM_SYSKEYDOWN) {
