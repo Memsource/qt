@@ -483,9 +483,8 @@ static inline int toKeyOrUnicode(int vk, int scancode, unsigned char *kbdBuffer,
     Q_ASSERT(vk > 0 && vk < 256);
     int code = 0;
     QChar unicodeBuffer[5];
-    int res = vk;//ToUnicode(vk, scancode, kbdBuffer, reinterpret_cast<LPWSTR>(unicodeBuffer), 5, 0);
-    printMessage(QString("RES = " ) +  QString::number(res));
-
+    int res = vk;
+    
     // When Ctrl modifier is used ToUnicode does not return correct values. In order to assign the
     // right key the control modifier is removed for just that function if the previous call failed.
     if (res == 0 && kbdBuffer[VK_CONTROL]) {
@@ -496,8 +495,6 @@ static inline int toKeyOrUnicode(int vk, int scancode, unsigned char *kbdBuffer,
     }
     if (res)
         code = unicodeBuffer[0].toUpper().unicode();
-
-    printMessage(QString("Code = " ) +  QString::number(code));
 
     // Qt::Key_*'s are not encoded below 0x20, so try again, and DEL keys (0x7f) is encoded with a
     // proper Qt::Key_ code
@@ -671,7 +668,6 @@ void QKeyMapperPrivate::updateKeyMap(const MSG &msg)
 void QKeyMapperPrivate::updatePossibleKeyCodes(unsigned char *kbdBuffer, quint32 scancode,
                                                quint32 vk_key)
 {
-    //printMessage("updatePossibleKey vk_key =" + QString::number(vk_key) + " scan code = " + QString::number(scancode));
     if (!vk_key || (keyLayout[vk_key] && !keyLayout[vk_key]->dirty))
         return;
 
@@ -738,18 +734,9 @@ void QKeyMapperPrivate::updatePossibleKeyCodes(unsigned char *kbdBuffer, quint32
         // transitions in modifiers, so this helps us capture all possible deadkeys.
         unsigned char emptyBuffer[256];
         memset(emptyBuffer, 0, sizeof(emptyBuffer));
-        //printMessage("updatePossibleKeyCodes " + QString::number(vk_key));
         ::ToAscii(VK_SPACE, 0, emptyBuffer, reinterpret_cast<LPWORD>(&buffer), 0);
         ::ToAscii(vk_key, scancode, kbdBuffer, reinterpret_cast<LPWORD>(&buffer), 0);
     }
-//    QString s = "test";
-//    unsigned char * c = buffer;
-//    for(int i = 0; i != 256; ++i )
-//    {
-//        if (*++c != NULL)
-//            s += *c;
-//    }
-//    printMessage(s);
 
 #ifdef DEBUG_KEYMAPPER
     qDebug("updatePossibleKeyCodes for virtual key = 0x%02x!", vk_key);
@@ -858,9 +845,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
         if (!ch.isNull())
             s += ch;
 
-        printMessage("multi char s " + s + "vk_key" + QString::number(vk_key) + " Msg.message = " + QString::number(msg.message)
-                                                           + " Msg.wParam = " + QString::number(msg.wParam));
-
         k0 = q->sendKeyEvent(widget, grab, QEvent::KeyPress, 0, Qt::KeyboardModifier(state), s, false, 0, scancode, vk_key, nModifiers);
         k1 = q->sendKeyEvent(widget, grab, QEvent::KeyRelease, 0, Qt::KeyboardModifier(state), s, false, 0, scancode, vk_key, nModifiers);
     }
@@ -871,10 +855,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
         QChar ch = QChar((ushort)msg.wParam);
         if (!ch.isNull())
             s += ch;
-
-        printMessage("Input s " + s + "vk_key" + QString::number(vk_key) + " Msg.message = " + QString::number(msg.message)
-                                                           + " Msg.wParam = " + QString::number(msg.wParam));
-
 
         k0 = q->sendKeyEvent(widget, grab, QEvent::KeyPress, 0, Qt::KeyboardModifier(state), s, false, 0, scancode, vk_key, nModifiers);
         k1 = q->sendKeyEvent(widget, grab, QEvent::KeyRelease, 0, Qt::KeyboardModifier(state), s, false, 0, scancode, vk_key, nModifiers);
@@ -905,8 +885,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
                     if (dirStatus == VK_LSHIFT
                         && ((msg.wParam == VK_SHIFT && GetKeyState(VK_LCONTROL))
                         || (msg.wParam == VK_CONTROL && GetKeyState(VK_LSHIFT)))) {
-                        printMessage("Directionality code Msg.message = " + QString::number(msg.message)
-                                                                           + " Msg.wParam = " + QString::number(msg.wParam));
                             k0 = q->sendKeyEvent(widget, grab, QEvent::KeyPress, Qt::Key_Direction_L, 0,
                                                  QString(), false, 0,
                                                  scancode, msg.wParam, nModifiers);
@@ -917,8 +895,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
                         } else if (dirStatus == VK_RSHIFT
                                    && ( (msg.wParam == VK_SHIFT && GetKeyState(VK_RCONTROL))
                                    || (msg.wParam == VK_CONTROL && GetKeyState(VK_RSHIFT)))) {
-                            printMessage("Directionality else code Msg.message = " + QString::number(msg.message)
-                                                                               + " Msg.wParam = " + QString::number(msg.wParam));
                                 k0 = q->sendKeyEvent(widget, grab, QEvent::KeyPress, Qt::Key_Direction_R,
                                                      0, QString(), false, 0,
                                                      scancode, msg.wParam, nModifiers);
@@ -954,11 +930,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
             unsigned char kbdBuffer[256]; // Will hold the complete keyboard state
             GetKeyboardState(kbdBuffer);
             code = toKeyOrUnicode(msg.wParam, scancode, kbdBuffer);
-            //code = i == msg.wParam ? i : msg.wParam;
-            //std::stringstream s;
-            //s << kbdBuffer;
-            //printMessage( QString("Buffer") + QString::fromStdString(s.str()));
-            //printMessage(QString("Translate code ") + QString::number(code) + " wParam = " + QString::number(msg.wParam) );
         }
 
         // Invert state logic:
@@ -1027,7 +998,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
 
         // KEYDOWN ---------------------------------------------------------------------------------
         if (msgType == WM_KEYDOWN || msgType == WM_IME_KEYDOWN || msgType == WM_SYSKEYDOWN) {
-            printMessage("KEYDOWN");
             // Get the last record of this key press, so we can validate the current state
             // The record is not removed from the list
             KeyRecord *rec = key_recorder.findKey(msg.wParam, false);
@@ -1115,8 +1085,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
             // so, we have an auto-repeating key
             if (rec) {
                 if (code < Qt::Key_Shift || code > Qt::Key_ScrollLock) {
-                    printMessage("DOWN1 code " + QString::number(code) + " Msg.message = " + QString::number(msg.message)
-                                                                       + " Msg.wParam = " + QString::number(msg.wParam));
                     k0 = q->sendKeyEvent(widget, grab, QEvent::KeyRelease, code,
                                          Qt::KeyboardModifier(state), rec->text, true, 0,
                                          scancode, msg.wParam, nModifiers);
@@ -1133,8 +1101,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
                     text += uch;
                 char a = uch.row() ? 0 : uch.cell();
                 key_recorder.storeKey(msg.wParam, a, state, text);
-                printMessage("DOWN2 code " + QString::number(code) + " Msg.message = " + QString::number(msg.message)
-                                                                   + " Msg.wParam = " + QString::number(msg.wParam));
                 k0 = q->sendKeyEvent(widget, grab, QEvent::KeyPress, code, Qt::KeyboardModifier(state),
                                      text, false, 0, scancode, msg.wParam, nModifiers);
 
@@ -1161,7 +1127,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
 
         // KEYUP -----------------------------------------------------------------------------------
         else {
-            printMessage("KEYUP");
             // Try to locate the key in our records, and remove it if it exists.
             // The key may not be in our records if, for example, the down event was handled by
             // win32 natively, or our window gets focus while a key is already press, but now gets
@@ -1180,8 +1145,6 @@ bool QKeyMapperPrivate::translateKeyEvent(QWidget *widget, const MSG &msg, bool 
                 if (code == Qt::Key_Tab && (state & Qt::ShiftModifier) == Qt::ShiftModifier)
                     code = Qt::Key_Backtab;
 
-                printMessage("Up code " + QString::number(code) + " Msg.message = " + QString::number(msg.message)
-                                                                   + " Msg.wParam = " + QString::number(msg.wParam));
                 k0 = q->sendKeyEvent(widget, grab, QEvent::KeyRelease, code, Qt::KeyboardModifier(state),
                                      (rec ? rec->text : QString()), false, 0, scancode, msg.wParam, nModifiers);
 

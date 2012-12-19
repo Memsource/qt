@@ -58,8 +58,6 @@ extern void qt_wince_hide_taskbar(HWND hwnd); //defined in qguifunctions_wince.c
 #endif
 #endif
 
-#include <QFile>
-
 #include "qapplication.h"
 #include "qcoreapplication.h"
 #include "qdesktopwidget.h"
@@ -1467,40 +1465,8 @@ static bool qt_is_translatable_mouse_event(UINT message)
             ;
 }
 
-void printMessage(const QString& message)
-{
-    QFile file("C:\\output.txt");
-    if (!file.open(QIODevice::Append | QIODevice::Text))
-             return;
-
-    QTextStream out(&file);
-
-    out << message << "\n";
-    out.reset();
-    file.close();
-}
-
 extern "C" LRESULT QT_WIN_CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (message == WM_KEYUP || message == WM_KEYDOWN || message == WM_DEADCHAR || message == WM_CHAR)
-        printMessage("<<<<<<<<QtWndProc>>>>>>> message = " + QString::number(message) + " wParam == " + QString::number(wParam));
-    if (message == WM_KEYUP)
-    {
-        printMessage("<<<<<<<<WM_KEYUP(message)>>>>>>>");
-    }
-    if (message == WM_KEYDOWN)
-    {
-       printMessage("<<<<<<<<WM_KEYDOWN(message)>>>>>>>");
-    }
-    if (message == WM_DEADCHAR)
-    {
-       printMessage("<<<<<<<<WM_DEADCHAR(message)>>>>>>>");
-    }
-    if (message == WM_CHAR || wParam == WM_CHAR)
-    {
-       printMessage("<<<<<<<<WM_CHAR(message)>>>>>>>");
-    }
-
     bool result = true;
     QEvent::Type evt_type = QEvent::None;
     QETWidget *widget = 0;
@@ -1793,12 +1759,6 @@ extern "C" LRESULT QT_WIN_CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wPa
             break;
         case WM_KEYDOWN:                        // keyboard event
         case WM_SYSKEYDOWN:
-//            if (wParam == 222)
-//            {
-//                printMessage("QtWndProc begin");
-//                QtWndProc(hwnd, WM_KEYUP, 80, lParam);
-//                printMessage("QtWndProc end");
-//            }
             qt_keymapper_private()->updateKeyMap(msg);
             // fall-through intended
         case WM_KEYUP:
@@ -1824,18 +1784,7 @@ extern "C" LRESULT QT_WIN_CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wPa
             MSG msg1;
             bool anyMsg = PeekMessage(&msg1, msg.hwnd, 0, 0, PM_NOREMOVE);
 
-            if (anyMsg && msg1.message == WM_CHAR)
-                printMessage("next msg.WM_CHAR");
-            if (anyMsg && msg1.message == WM_DEADCHAR)
-               printMessage("next msg.WM_DEADCHAR");
-            if (anyMsg && msg1.message == WM_KEYUP)
-                printMessage("next msg.WM_KEYUP");
-            if (anyMsg && msg1.message == WM_KEYDOWN)
-               printMessage("next msg.WM_KEYDOWN");
-
-            if (anyMsg && msg1.message == WM_DEADCHAR/* & message != WM_KEYUP*/) {
-                //out << decodeMSG(msg1) << " " << type << QTime::currentTime().hour() << "-"
-                 //       << QTime::currentTime().minute() << "-" << QTime::currentTime().second() << "-" << QTime::currentTime().msec()<< "\n";
+            if (anyMsg && msg1.message == WM_DEADCHAR) {
                 result = true; // consume event since there is a dead char next
                 break;
             }
