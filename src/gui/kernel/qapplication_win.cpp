@@ -59,7 +59,6 @@ extern void qt_wince_hide_taskbar(HWND hwnd); //defined in qguifunctions_wince.c
 #endif
 
 #include "qapplication.h"
-#include "qcoreapplication.h"
 #include "qdesktopwidget.h"
 #include "qevent.h"
 #include "private/qeventdispatcher_win_p.h"

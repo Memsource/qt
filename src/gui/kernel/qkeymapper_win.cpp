@@ -49,7 +49,6 @@
 #include <qwidget.h>
 #include <qapplication.h>
 #include <ctype.h>
-#include <sstream>
 
 QT_BEGIN_NAMESPACE
 
