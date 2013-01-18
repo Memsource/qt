@@ -104,7 +104,8 @@ public:
         WordWrap,
         ManualWrap,
         WrapAnywhere,
-        WrapAtWordBoundaryOrAnywhere
+        WrapAtWordBoundaryOrAnywhere,
+        WrapAtWordBoundarySpacesOrAnywhere
     };
     inline void setWrapMode(WrapMode wrap) { wordWrap = wrap; }
     inline WrapMode wrapMode() const { return static_cast<WrapMode>(wordWrap); }
