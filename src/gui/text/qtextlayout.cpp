@@ -1819,7 +1819,7 @@ void QTextLine::layout_helper(int maxGlyphs)
             ++lbh.glyphCount;
             if (lbh.checkFullOtherwiseExtend(line))
                 goto found;
-        } else if (attributes[lbh.currentPosition].whiteSpace) {
+        } else if (attributes[lbh.currentPosition].whiteSpace && eng->option.wrapMode() != QTextOption::WrapAtWordBoundarySpacesOrAnywhere) {
             lbh.whiteSpaceOrObject = true;
             while (lbh.currentPosition < end && attributes[lbh.currentPosition].whiteSpace)
                 addNextCluster(lbh.currentPosition, end, lbh.spaceData, lbh.glyphCount,
@@ -1939,7 +1939,7 @@ found:
     line.justified = false;
     line.gridfitted = false;
 
-    if (eng->option.wrapMode() == QTextOption::WrapAtWordBoundaryOrAnywhere) {
+    if (eng->option.wrapMode() == QTextOption::WrapAtWordBoundaryOrAnywhere || eng->option.wrapMode() == QTextOption::WrapAtWordBoundarySpacesOrAnywhere) {
         if ((lbh.maxGlyphs != INT_MAX && lbh.glyphCount > lbh.maxGlyphs)
             || (lbh.maxGlyphs == INT_MAX && line.textWidth > line.width)) {
 
