@@ -79,6 +79,143 @@ namespace QPatternist
                     rich += QLatin1String("&apos;");
                     break;
                 }
+                case '«':
+                {
+                    rich += QLatin1String("&laquo;");
+                    break;
+                }
+                case '»':
+                {
+                    rich += QLatin1String("&raquo;");
+                    break;
+                }
+                case 0x2018:
+                {
+                    rich += QLatin1String("&lsquo;");
+                    break;
+                }
+                case 0x2019:
+                {
+                    rich += QLatin1String("&rsquo;");
+                    break;
+                }
+                case 0x201A:
+                {
+                    rich += QLatin1String("&sbquo;");
+                    break;
+                }
+                case 0x201B:
+                {
+                    rich += QLatin1String("&#8219;");
+                    break;
+                }
+                case 0x201C:
+                {
+                    rich += QLatin1String("&ldquo;");
+                    break;
+                }
+                case 0x201D:
+                {
+                    rich += QLatin1String("&rdquo;");
+                    break;
+                }
+                case 0x201E:
+                {
+                    rich += QLatin1String("&bdquo;");
+                    break;
+                }
+                case 0x201F:
+                {
+                    rich += QLatin1String("&#8223;");
+                    break;
+                }
+                case 0x2039:
+                {
+                    rich += QLatin1String("&lsaquo;");
+                    break;
+                }
+                case 0x203A:
+                {
+                    rich += QLatin1String("&lsaquo;");
+                    break;
+                }
+                // Quotation marks in Chinese, Japanese, and Korean (CJK)
+                case 0x300C:
+                {
+                    rich += QLatin1String("&#12300;");
+                    break;
+                }
+                case 0x300D:
+                {
+                    rich += QLatin1String("&#12301;");
+                    break;
+                }
+                case 0x300E:
+                {
+                    rich += QLatin1String("&#12302;");
+                    break;
+                }
+                case 0x300F:
+                {
+                    rich += QLatin1String("&#12303;");
+                    break;
+                }
+                case 0x301D:
+                {
+                    rich += QLatin1String("&#12317;");
+                    break;
+                }
+                case 0x301E:
+                {
+                    rich += QLatin1String("&#12318;");
+                    break;
+                }
+                case 0x301F:
+                {
+                    rich += QLatin1String("&#12319;");
+                    break;
+                }
+                // Alternate encodings
+                case 0xFE41:
+                {
+                    rich += QLatin1String("&#65089;");
+                    break;
+                }
+                case 0xFE42:
+                {
+                    rich += QLatin1String("&#65090;");
+                    break;
+                }
+                case 0xFE43:
+                {
+                    rich += QLatin1String("&#65091;");
+                    break;
+                }
+                case 0xFE44:
+                {
+                    rich += QLatin1String("&#65092;");
+                    break;
+                }
+                case 0xFF02:
+                {
+                    rich += QLatin1String("&#65282;");
+                    break;
+                }
+                case 0xFF07:
+                {
+                    rich += QLatin1String("&#65287;");
+                    break;
+                }
+                case 0xFF62:
+                {
+                    rich += QLatin1String("&#65378;");
+                    break;
+                }
+                case 0xFF63:
+                {
+                    rich += QLatin1String("&#65379;");
+                    break;
+                }
                 default:
                     rich += input.at(i);
             }
