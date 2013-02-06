@@ -178,7 +178,40 @@ void QScriptSyntaxHighlighter::highlightBlock(const QString &text)
 
     // tokens
     enum Tokens { InputAlpha, InputNumber, InputAsterix, InputSlash, InputParen,
-                  InputSpace, InputHash, InputQuotation, InputApostrophe, InputSep, NumTokens };
+                  InputSpace, InputHash, InputQuotation, InputApostrophe,
+
+
+                  NonStandardQuote,
+
+                  // Nonstandard quotes Begin
+                  InputLeftDoubleAngleQuote,
+                  InputRightDoubleAngleQuote,
+                  InputLeftSingleQuote,
+                  InputRightSingleQuote,
+                  InputSingleLow9Quote,
+                  InputSingleHighReversed9Quote,
+                  InputLeftDoubleQuote,
+                  InputRightDoubleQuote,
+                  InputDoubleLow9Quote,
+                  InputDoubleHighReversed9Quote,
+                  InputLeftSingleAngleQuote,
+                  InputRightSingleAngleQuote,
+                  InputLeftCornerBracket,
+                  InputRightCornerBracket,
+                  InputLeftWhiteCornerBracket,
+                  InputRightWhiteCornerBracket,
+                  InputReversedDoublePrimeQuote,
+                  InputDoublePrimeQuote,
+                  InputLowDoublePrimeQuote,
+                  InputPresentFormVerticalLeftCornerBracket,
+                  InputPresentFormVerticalRightCornerBracket,
+                  InputPresentFormVerticalLeftCornerWhiteBracket,
+                  InputPresentFormVerticalRightCornerWhiteBracket,
+                  InputFullWidthQuote,
+                  InputFullWidthApostrophe,
+                  InputHalfWidthLeftCornerBracket,
+                  InputHalfWidthRightCornerBracket,
+                  InputSep, NumTokens };
 
     static uchar table[NumStates][NumTokens] = {
         { StateStandard,      StateNumber,     StateStandard,       StateCommentStart1,    StateStandard,   StateStandard,   StatePreProcessor, StateStringStart, StateString2Start, StateStandard }, // StateStandard
@@ -296,6 +329,88 @@ void QScriptSyntaxHighlighter::highlightBlock(const QString &text)
                     break;
                 case '\'':
                     input = InputApostrophe;
+                    break;
+                    // Nonstandard quotes Begin
+                case 0x00AB:
+                    input = InputLeftDoubleAngleQuote;
+                    break;
+                case 0x00BB:
+                    input = InputRightDoubleAngleQuote;
+                    break;
+                case 0x2018:
+                    input = InputLeftSingleQuote;
+                    break;
+                case 0x2019:
+                    input = InputRightSingleQuote;
+                    break;
+                case 0x201A:
+                    input = InputSingleLow9Quote;
+                    break;
+                case 0x201B:
+                    input = InputSingleHighReversed9Quote;
+                    break;
+                case 0x201C:
+                    input = InputLeftDoubleQuote;
+                    break;
+                case 0x201D:
+                    input = InputRightDoubleQuote;
+                    break;
+                case 0x201E:
+                    input = InputDoubleLow9Quote;
+                    break;
+                case 0x201F:
+                    input = InputDoubleHighReversed9Quote;
+                    break;
+                case 0x2039:
+                    input = InputLeftSingleAngleQuote;
+                    break;
+                case 0x203A:
+                    input = InputRightSingleAngleQuote;
+                    break;
+                case 0x300C:
+                    input = InputLeftCornerBracket;
+                    break;
+                case 0x300D:
+                    input = InputRightCornerBracket;
+                    break;
+                case 0x300E:
+                    input = InputLeftWhiteCornerBracket;
+                    break;
+                case 0x300F:
+                    input = InputRightWhiteCornerBracket;
+                    break;
+                case 0x301D:
+                    input = InputReversedDoublePrimeQuote;
+                    break;
+                case 0x301E:
+                    input = InputDoublePrimeQuote;
+                    break;
+                case 0x301F:
+                    input = InputLowDoublePrimeQuote;
+                    break;
+                case 0xFE41:
+                    input = InputPresentFormVerticalLeftCornerBracket;
+                    break;
+                case 0xFE42:
+                    input = InputPresentFormVerticalRightCornerBracket;
+                    break;
+                case 0xFE43:
+                    input = InputPresentFormVerticalLeftCornerWhiteBracket;
+                    break;
+                case 0xFE44:
+                    input = InputPresentFormVerticalRightCornerWhiteBracket;
+                    break;
+                case 0xFF02:
+                    input = InputFullWidthQuote;
+                    break;
+                case 0xFF07:
+                    input = InputFullWidthApostrophe;
+                    break;
+                case 0xFF62:
+                    input = InputHalfWidthLeftCornerBracket;
+                    break;
+                case 0xFF63:
+                    input = InputHalfWidthRightCornerBracket;
                     break;
                 case ' ':
                     input = InputSpace;
