@@ -450,7 +450,7 @@ static bool QT_FASTCALL _subDelims(const char **ptr)
     case '!': case '$': case '&': case '\'':
     case '(': case ')': case '*': case '+':
     case ',': case ';': case '=':
-    // Quotation marks in Unicode
+    /*// Quotation marks in Unicode
     case 0x2018: case 0x2019: case 0x201A: case 0x201B: case 0x201C: case 0x201D:
     case 0x201E: case 0x201F: case 0x2039: case 0x203A:
     // Quotation marks in Chinese, Japanese, and Korean (CJK)
@@ -458,7 +458,7 @@ static bool QT_FASTCALL _subDelims(const char **ptr)
     case 0x301D: case 0x301E: case 0x301F:
     // Alternate encodings
     case 0xFE41: case 0xFE42: case 0xFE43: case 0xFE44: case 0xFF02:
-    case 0xFF07: case 0xFF62: case 0xFF63:
+    case 0xFF07: case 0xFF62: case 0xFF63:*/
         ++(*ptr);
         return true;
     default:
@@ -874,7 +874,7 @@ static bool QT_FASTCALL _pchar(const char **ptr)
     case '!': case '$': case '&': case '\'': case '(': case ')': case '*':
     case '+': case ',': case ';': case '=': case ':': case '@':
     case '-': case '.': case '_': case '~':
-    // Quotation marks in Unicode
+    /*// Quotation marks in Unicode
     case 0x2018: case 0x2019: case 0x201A: case 0x201B: case 0x201C: case 0x201D:
     case 0x201E: case 0x201F: case 0x2039: case 0x203A:
     // Quotation marks in Chinese, Japanese, and Korean (CJK)
@@ -882,7 +882,7 @@ static bool QT_FASTCALL _pchar(const char **ptr)
     case 0x301D: case 0x301E: case 0x301F:
     // Alternate encodings
     case 0xFE41: case 0xFE42: case 0xFE43: case 0xFE44: case 0xFF02:
-    case 0xFF07: case 0xFF62: case 0xFF63:
+    case 0xFF07: case 0xFF62: case 0xFF63:*/
         ++(*ptr);
         return true;
     default:
