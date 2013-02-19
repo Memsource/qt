@@ -1668,9 +1668,10 @@ inline bool LineBreakHelper::checkFullOtherwiseExtend(QScriptLine &line)
 
     minw = qMax(minw, tmpData.textWidth);
     line += tmpData;
-    line.textWidth += spaceData.textWidth;
+    line += spaceData;
+    //line.textWidth += spaceData.textWidth;
 
-    line.length += spaceData.length;
+    //line.length += spaceData.length;
     tmpData.textWidth = 0;
     tmpData.length = 0;
     spaceData.textWidth = 0;
@@ -1819,26 +1820,44 @@ void QTextLine::layout_helper(int maxGlyphs)
             ++lbh.glyphCount;
             if (lbh.checkFullOtherwiseExtend(line))
                 goto found;
-        } else if (attributes[lbh.currentPosition].whiteSpace) {
+        /*} else if (attributes[lbh.currentPosition].whiteSpace) {
             lbh.whiteSpaceOrObject = true;
-            while (lbh.currentPosition < end && attributes[lbh.currentPosition].whiteSpace)
+        	while (lbh.currentPosition < end && attributes[lbh.currentPosition].whiteSpace)
                 addNextCluster(lbh.currentPosition, end, lbh.spaceData, lbh.glyphCount,
                                current, lbh.logClusters, lbh.glyphs);
 
             if (!lbh.manualWrap && lbh.spaceData.textWidth > line.width) {
                 lbh.spaceData.textWidth = line.width; // ignore spaces that fall out of the line.
                 goto found;
-            }
+            }*/
         } else {
             lbh.whiteSpaceOrObject = false;
-            bool sb_or_ws = false;
+            //bool sb_or_ws = false;
+            bool canBreak = false;
+            bool wsFound = false;
             lbh.saveCurrentGlyph();
             do {
-                addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
-                               current, lbh.logClusters, lbh.glyphs);
+            	if( attributes[ lbh.currentPosition ].whiteSpace )
+            	{
+            		wsFound = true;
+            		addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
+								   current, lbh.logClusters, lbh.glyphs);
+            	}
+            	else
+            	{
+            		if( wsFound )
+            		{
+            			canBreak = true;
+            			break;
+            		}
 
-                if (attributes[lbh.currentPosition].whiteSpace || attributes[lbh.currentPosition-1].lineBreakType != HB_NoBreak) {
-                    sb_or_ws = true;
+					addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
+								   current, lbh.logClusters, lbh.glyphs);
+            	}
+
+                if (/*attributes[lbh.currentPosition].whiteSpace || */attributes[lbh.currentPosition-1].lineBreakType != HB_NoBreak) {
+                    //sb_or_ws = true;
+                	canBreak = true;
                     break;
                 } else if (breakany && attributes[lbh.currentPosition].charStop) {
                     break;
@@ -1875,12 +1894,15 @@ void QTextLine::layout_helper(int maxGlyphs)
             // for the code to be more readable. Logic borrowed from qfontmetrics.cpp.
             // We ignore the right bearing if the minimum negative bearing is too little to
             // expand the text beyond the edge.
-            if (sb_or_ws|breakany) {
+            if (canBreak|breakany) {
                 QFixed rightBearing = lbh.rightBearing; // store previous right bearing
 #if !defined(Q_WS_MAC)
                 if (lbh.calculateNewWidth(line) - lbh.minimumRightBearing > line.width)
+                	lbh.adjustRightBearing();
+#else
+                lbh.adjustRightBearing();
 #endif
-                    lbh.adjustRightBearing();
+
                 if (lbh.checkFullOtherwiseExtend(line)) {
                     // we are too wide, fix right bearing
                     if (rightBearing <= 0)
