@@ -668,7 +668,7 @@ QTextDocumentLayoutPrivate::HitPoint
 QTextDocumentLayoutPrivate::hitTest(QTextFrame::Iterator it, HitPoint hit, const QFixedPoint &p,
                                     int *position, QTextLayout **l, Qt::HitTestAccuracy accuracy) const
 {
-    INC_INDENT;
+	INC_INDENT;
 
     for (; !it.atEnd(); ++it) {
         QTextFrame *c = it.currentFrame();
@@ -740,7 +740,7 @@ QTextDocumentLayoutPrivate::HitPoint
 QTextDocumentLayoutPrivate::hitTest(QTextBlock bl, const QFixedPoint &point, int *position, QTextLayout **l,
                                     Qt::HitTestAccuracy accuracy) const
 {
-    QTextLayout *tl = bl.layout();
+	QTextLayout *tl = bl.layout();
     QRectF textrect = tl->boundingRect();
     textrect.translate(tl->position());
 //     LDEBUG << "    checking block" << bl.position() << "point=" << point
@@ -2949,7 +2949,7 @@ QRectF QTextDocumentLayout::doLayout(int from, int oldLength, int length)
 
 int QTextDocumentLayout::hitTest(const QPointF &point, Qt::HitTestAccuracy accuracy) const
 {
-    Q_D(const QTextDocumentLayout);
+	Q_D(const QTextDocumentLayout);
     d->ensureLayouted(QFixed::fromReal(point.y()));
     QTextFrame *f = d->docPrivate->rootFrame();
     int position = 0;
