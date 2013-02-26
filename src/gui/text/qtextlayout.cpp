@@ -1669,9 +1669,7 @@ inline bool LineBreakHelper::checkFullOtherwiseExtend(QScriptLine &line)
     minw = qMax(minw, tmpData.textWidth);
     line += tmpData;
     line += spaceData;
-    //line.textWidth += spaceData.textWidth;
 
-    //line.length += spaceData.length;
     tmpData.textWidth = 0;
     tmpData.length = 0;
     spaceData.textWidth = 0;
@@ -1707,7 +1705,7 @@ static inline void addNextCluster(int &pos, int end, QScriptLine &line, int &gly
 // fill QScriptLine
 void QTextLine::layout_helper(int maxGlyphs)
 {
-    QScriptLine &line = eng->lines[i];
+	QScriptLine &line = eng->lines[i];
     line.length = 0;
     line.trailingSpaces = 0;
     line.textWidth = 0;
@@ -1743,6 +1741,7 @@ void QTextLine::layout_helper(int maxGlyphs)
     lbh.logClusters = eng->layoutData->logClustersPtr;
     lbh.resetPreviousGlyph();
 
+    bool		previousSpace = false;
     while (newItem < eng->layoutData->items.size()) {
         lbh.resetRightBearing();
         lbh.softHyphenWidth = 0;
@@ -1804,9 +1803,14 @@ void QTextLine::layout_helper(int maxGlyphs)
                 lbh.tmpData.length++;
                 lbh.adjustPreviousRightBearing();
             }
-            line += lbh.tmpData;
+            lbh.checkFullOtherwiseExtend(line);
             goto found;
         } else if (current.analysis.flags == QScriptAnalysis::Object) {
+        	if( previousSpace == true && lbh.checkFullOtherwiseExtend(line) )
+        	{
+        		goto found;
+        	}
+
             lbh.whiteSpaceOrObject = true;
             lbh.tmpData.length++;
 
@@ -1818,48 +1822,34 @@ void QTextLine::layout_helper(int maxGlyphs)
 
             newItem = item + 1;
             ++lbh.glyphCount;
-            if (lbh.checkFullOtherwiseExtend(line))
-                goto found;
-        /*} else if (attributes[lbh.currentPosition].whiteSpace) {
-            lbh.whiteSpaceOrObject = true;
-        	while (lbh.currentPosition < end && attributes[lbh.currentPosition].whiteSpace)
-                addNextCluster(lbh.currentPosition, end, lbh.spaceData, lbh.glyphCount,
-                               current, lbh.logClusters, lbh.glyphs);
-
-            if (!lbh.manualWrap && lbh.spaceData.textWidth > line.width) {
-                lbh.spaceData.textWidth = line.width; // ignore spaces that fall out of the line.
-                goto found;
-            }*/
-        } else {
+        }
+        // characters and spaces
+        else {
             lbh.whiteSpaceOrObject = false;
-            //bool sb_or_ws = false;
             bool canBreak = false;
-            bool wsFound = false;
             lbh.saveCurrentGlyph();
+
             do {
-            	if( attributes[ lbh.currentPosition ].whiteSpace )
-            	{
-            		wsFound = true;
-            		addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
-								   current, lbh.logClusters, lbh.glyphs);
-            	}
-            	else
-            	{
-            		if( wsFound )
-            		{
-            			canBreak = true;
-            			break;
-            		}
+            	if( attributes[lbh.currentPosition].whiteSpace )
+				{
+					previousSpace = true;
+				}
+				else
+				{
+					if( previousSpace == true )
+					{
+						canBreak = true;
+						break;
+					}
+				}
 
-					addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
+            	addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
 								   current, lbh.logClusters, lbh.glyphs);
-            	}
-
-                if (/*attributes[lbh.currentPosition].whiteSpace || */attributes[lbh.currentPosition-1].lineBreakType != HB_NoBreak) {
-                    //sb_or_ws = true;
-                	canBreak = true;
+            	if (attributes[lbh.currentPosition-1].lineBreakType != HB_NoBreak) {
+                    canBreak = true;
                     break;
-                } else if (breakany && attributes[lbh.currentPosition].charStop) {
+                }
+                else if (breakany && attributes[lbh.currentPosition].charStop) {
                     break;
                 }
             } while (lbh.currentPosition < end);
@@ -1895,6 +1885,7 @@ void QTextLine::layout_helper(int maxGlyphs)
             // We ignore the right bearing if the minimum negative bearing is too little to
             // expand the text beyond the edge.
             if (canBreak|breakany) {
+            	previousSpace = false;
                 QFixed rightBearing = lbh.rightBearing; // store previous right bearing
 #if !defined(Q_WS_MAC)
                 if (lbh.calculateNewWidth(line) - lbh.minimumRightBearing > line.width)
@@ -2014,10 +2005,6 @@ int QTextLine::textStart() const
 */
 int QTextLine::textLength() const
 {
-    if (eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators
-        && eng->block.isValid() && i == eng->lines.count()-1) {
-        return eng->lines[i].length - 1;
-    }
     return eng->lines[i].length + eng->lines[i].trailingSpaces;
 }
 
@@ -2308,6 +2295,7 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
     QPen pen = p->pen();
 
     bool noText = (selection && selection->format.property(SuppressText).toBool());
+    bool rtl = (eng->block.document() && eng->block.document()->defaultTextOption().textDirection() == Qt::RightToLeft);
 
     if (!line.length) {
         if (selection
@@ -2488,6 +2476,42 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
             p->drawText(QPointF(iterator.x.toReal(), itemBaseLine.toReal()), visualSpace);
             p->setPen(pen);
         }
+        if (si.analysis.flags == QScriptAnalysis::LineOrParagraphSeparator
+			&& (eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators)) {
+			QBrush c = format.foreground();
+			if (c.style() != Qt::NoBrush)
+				p->setPen(c.color());
+			QChar visualSpace;
+			QPointF textDrawPoint;
+			if( rtl )
+			{
+				visualSpace = ((ushort)0x21aa);
+				textDrawPoint = QPointF( (line.width - line.textWidth).toReal(), y.toReal() );
+			}
+			else
+			{
+				visualSpace = ((ushort)0x21a9);
+				textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
+			}
+			p->drawText(textDrawPoint, visualSpace);
+			p->setPen(pen);
+		}
+    }
+
+    if( (i == eng->lines.size() - 1) &&
+    	(eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators) &&
+    	(eng->block.next().isValid() != false) )
+    {
+    	QPointF		textDrawPoint;
+    	if( rtl )
+    	{
+    		textDrawPoint = QPointF( (line.width - line.textWidth).toReal(), y.toReal() );
+    	}
+    	else
+    	{
+    		textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
+    	}
+    	p->drawText(textDrawPoint, QChar( (ushort) 0xB6 ) );
     }
 
 
@@ -2513,7 +2537,7 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
 */
 qreal QTextLine::cursorToX(int *cursorPos, Edge edge) const
 {
-    if (!eng->layoutData)
+	if (!eng->layoutData)
         eng->itemize();
 
     const QScriptLine &line = eng->lines[i];
@@ -2655,10 +2679,11 @@ qreal QTextLine::cursorToX(int *cursorPos, Edge edge) const
 */
 int QTextLine::xToCursor(qreal _x, CursorPosition cpos) const
 {
-    QFixed x = QFixed::fromReal(_x);
+	QFixed x = QFixed::fromReal(_x);
     const QScriptLine &line = eng->lines[i];
     bool lastLine = i >= eng->lines.size() - 1;
     int lineNum = i;
+    bool rtl = (eng->block.document() && eng->block.document()->defaultTextOption().textDirection() == Qt::RightToLeft);
 
     if (!eng->layoutData)
         eng->itemize();
@@ -2685,21 +2710,33 @@ int QTextLine::xToCursor(qreal _x, CursorPosition cpos) const
         levels[i] = eng->layoutData->items[i+firstItem].analysis.bidiLevel;
     QTextEngine::bidiReorder(nItems, levels.data(), visualOrder.data());
 
+    bool	beforeLineStart;
+    if( rtl )
+    {
+    	beforeLineStart = x >= line.textWidth;
+    }
+    else
+    {
+    	beforeLineStart = x <= 0;
+    }
+
+    bool	insideLine;
+    insideLine = (x > 0) && ((x < line.textWidth) || (line.justified && x < line.width));
+
     bool visual = eng->visualCursorMovement();
-    if (x <= 0) {
+    if ( beforeLineStart ) {
         // left of first item
-        int item = visualOrder[0]+firstItem;
+        int item = /*visualOrder[0]+*/firstItem;
         QScriptItem &si = eng->layoutData->items[item];
         if (!si.num_glyphs)
             eng->shape(item);
         int pos = si.position;
-        if (si.analysis.bidiLevel % 2)
-            pos += eng->length(item);
+        /*if (si.analysis.bidiLevel % 2)
+            pos += eng->length(item);*/
         pos = qMax(line.from, pos);
         pos = qMin(line.from + line_length, pos);
         return pos;
-    } else if (x < line.textWidth
-               || (line.justified && x < line.width)) {
+    } else if ( insideLine ) {
         // has to be in one of the runs
         QFixed pos;
         bool rtl = eng->isRightToLeft();
@@ -2744,11 +2781,15 @@ int QTextLine::xToCursor(qreal _x, CursorPosition cpos) const
 //             qDebug("      inside run");
             if (si.analysis.flags >= QScriptAnalysis::TabOrObject) {
                 if (cpos == QTextLine::CursorOnCharacter)
-                    return si.position;
+                {
+                	return si.position;
+                }
                 bool left_half = (x - pos) < item_width/2;
 
                 if (bool(si.analysis.bidiLevel % 2) != left_half)
-                    return si.position;
+                {
+                	return si.position;
+                }
                 return si.position + 1;
             }
 
@@ -2840,7 +2881,9 @@ int QTextLine::xToCursor(qreal _x, CursorPosition cpos) const
                             continue;
                         }
                         if (rtl && nchars > 0)
-                            return insertionPoints[lastLine ? nchars : nchars - 1];
+                        {
+                        	return insertionPoints[lastLine ? nchars : nchars - 1];
+                        }
                     }
                     return eng->positionInLigature(&si, end, x, pos, -1,
                                                    cpos == QTextLine::CursorOnCharacter);
@@ -2853,13 +2896,12 @@ int QTextLine::xToCursor(qreal _x, CursorPosition cpos) const
     }
     // right of last item
 //     qDebug() << "right of last";
-    int item = visualOrder[nItems-1]+firstItem;
+    int item = (rtl ? visualOrder[ 0 ] + firstItem : visualOrder[nItems-1]+firstItem);
     QScriptItem &si = eng->layoutData->items[item];
     if (!si.num_glyphs)
         eng->shape(item);
     int pos = si.position;
-    if (!(si.analysis.bidiLevel % 2))
-        pos += eng->length(item);
+    pos += eng->length(item);
     pos = qMax(line.from, pos);
 
     int maxPos = line.from + line_length;
