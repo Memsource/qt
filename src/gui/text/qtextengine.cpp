@@ -2418,8 +2418,6 @@ bool QTextEngine::atWordSeparator(int position) const
     case '^':
     case '*':
     case '\'':
-    case '�':
-    case '�':
     case '"':
     case '`':
     case '~':
