@@ -2473,7 +2473,7 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
             if (c.style() != Qt::NoBrush)
                 p->setPen(c.color());
                 
-			QChar visualSpace((ushort)0xb7);
+			QChar visualSpace;
 			if( si.analysis.flags == QScriptAnalysis::Space )
 			{
 				visualSpace = QChar((ushort)0xb7);

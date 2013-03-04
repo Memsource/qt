@@ -1566,9 +1566,13 @@ void QTextEngine::itemize() const
             analysis->bidiLevel = control.baseLevel();
             break;
         case 32: // Space
-        case QChar::Nbsp:
-			analysis->script = QUnicodeTables::Common;
+        	analysis->script = QUnicodeTables::Common;
 			analysis->flags = QScriptAnalysis::Space;
+			analysis->bidiLevel = control.baseLevel();
+			break;
+		case QChar::Nbsp:
+			analysis->script = QUnicodeTables::Common;
+			analysis->flags = QScriptAnalysis::NonBreakingSpace;
 			analysis->bidiLevel = control.baseLevel();
 			break;
         default:
