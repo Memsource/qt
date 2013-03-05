@@ -2489,22 +2489,28 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
         if (si.analysis.flags == QScriptAnalysis::LineOrParagraphSeparator
 			&& (eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators)) {
 			QBrush c = format.foreground();
+#if defined( Q_WS_WIN )
+			QFont font = p->font();
+			p->setFont( QFont( "Lucida Sans Unicode", 11 ) );
+#endif
 			if (c.style() != Qt::NoBrush)
 				p->setPen(c.color());
-			QChar visualSpace;
+			QChar visualChar;
 			QPointF textDrawPoint;
 			if( rtl )
 			{
-				visualSpace = ((ushort)0x21aa);
+				visualChar = ((ushort)0x21aa);
 				textDrawPoint = QPointF( (line.width - line.textWidth).toReal(), y.toReal() );
 			}
 			else
 			{
-				visualSpace = ((ushort)0x21a9);
+				visualChar = ((ushort)0x21a9);
 				textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
 			}
-			p->drawText(textDrawPoint, visualSpace);
-			p->setPen(pen);
+			p->drawText(textDrawPoint, visualChar);
+#if defined( Q_WS_WIN )
+			p->setFont( font );
+#endif
 		}
     }
 
@@ -2512,6 +2518,10 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
     	(eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators) &&
     	(eng->block.next().isValid() != false) )
     {
+#if defined( Q_WS_WIN )
+		QFont font = p->font();
+		p->setFont( QFont( "Lucida Sans Unicode", 11 ) );
+#endif
     	QPointF		textDrawPoint;
     	if( rtl )
     	{
@@ -2522,6 +2532,9 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
     		textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
     	}
     	p->drawText(textDrawPoint, QChar( (ushort) 0xB6 ) );
+#if defined( Q_WS_WIN )
+		p->setFont( font );
+#endif
     }
 
 
