@@ -1806,7 +1806,8 @@ void QTextLine::layout_helper(int maxGlyphs)
             lbh.checkFullOtherwiseExtend(line);
             goto found;
         } else if (current.analysis.flags == QScriptAnalysis::Object) {
-        	if( previousSpace == true && lbh.checkFullOtherwiseExtend(line) )
+        	if( (breakany && lbh.checkFullOtherwiseExtend(line)) ||
+        		(previousSpace == true && lbh.checkFullOtherwiseExtend(line)) )
         	{
         		goto found;
         	}
