@@ -6496,7 +6496,8 @@ static void drawTextItemDecoration(QPainter *painter, const QPointF &pos, const 
             pen.setColor(uc);
 
         // Adapt wave to underlineOffset or pen width, whatever is larger, to make it work on all platforms
-        const QPixmap wave = generateWavyPixmap(qMax(underlineOffset, pen.widthF()), pen);
+        //const QPixmap wave = generateWavyPixmap(qMax(underlineOffset, pen.widthF()), pen);
+        const QPixmap wave = generateWavyPixmap(fe->descent().toReal() / 2.0, pen);
         const int descent = (int) fe->descent().toReal();
 
         painter->setBrushOrigin(painter->brushOrigin().x(), 0);
