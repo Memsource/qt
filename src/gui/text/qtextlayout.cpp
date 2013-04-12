@@ -2298,6 +2298,35 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
     bool noText = (selection && selection->format.property(SuppressText).toBool());
     bool rtl = (eng->block.document() && eng->block.document()->defaultTextOption().textDirection() == Qt::RightToLeft);
 
+    QTextLineItemIterator iterator(eng, i, pos, selection);
+    QFixed lineBase = line.base();
+
+    const QFixed y = QFixed::fromReal(pos.y()) + line.y + lineBase;
+
+    // draw paragraph separator even if line is empty
+    if( (i == eng->lines.size() - 1) &&
+        (eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators) &&
+        (eng->block.next().isValid() != false) )
+    {
+#if defined( Q_WS_WIN )
+        QFont font = p->font();
+        p->setFont( QFont( "Lucida Sans Unicode", 11 ) );
+#endif
+        QPointF     textDrawPoint;
+        if( rtl )
+        {
+            textDrawPoint = QPointF( (line.width - line.textWidth).toReal(), y.toReal() );
+        }
+        else
+        {
+            textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
+        }
+        p->drawText(textDrawPoint, QChar( (ushort) 0xB6 ) );
+#if defined( Q_WS_WIN )
+        p->setFont( font );
+#endif
+    }
+
     if (!line.length) {
         if (selection
             && selection->start <= line.from
@@ -2311,12 +2340,6 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
         }
         return;
     }
-
-
-    QTextLineItemIterator iterator(eng, i, pos, selection);
-    QFixed lineBase = line.base();
-
-    const QFixed y = QFixed::fromReal(pos.y()) + line.y + lineBase;
 
     bool suppressColors = (eng->option.flags() & QTextOption::SuppressColors);
     while (!iterator.atEnd()) {
@@ -2514,30 +2537,6 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
 #endif
 		}
     }
-
-    if( (i == eng->lines.size() - 1) &&
-    	(eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators) &&
-    	(eng->block.next().isValid() != false) )
-    {
-#if defined( Q_WS_WIN )
-		QFont font = p->font();
-		p->setFont( QFont( "Lucida Sans Unicode", 11 ) );
-#endif
-    	QPointF		textDrawPoint;
-    	if( rtl )
-    	{
-    		textDrawPoint = QPointF( (line.width - line.textWidth).toReal(), y.toReal() );
-    	}
-    	else
-    	{
-    		textDrawPoint = QPointF( line.textWidth.toReal() + eng->block.document()->documentMargin(), y.toReal() );
-    	}
-    	p->drawText(textDrawPoint, QChar( (ushort) 0xB6 ) );
-#if defined( Q_WS_WIN )
-		p->setFont( font );
-#endif
-    }
-
 
     if (eng->hasFormats())
         p->setPen(pen);
