@@ -1449,6 +1449,11 @@ void QTextCharFormat::setUnderlineStyle(UnderlineStyle style)
     setProperty(FontUnderline, style == SingleUnderline);
 }
 
+void QTextCharFormat::setMisspelling(bool misspelling)
+{
+    setProperty(TextMisspelling, misspelling);
+}
+
 /*!
     \fn void QTextCharFormat::setFontOverline(bool overline)
 

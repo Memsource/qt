@@ -6453,12 +6453,57 @@ static QPixmap generateWavyPixmap(qreal maxRadius, const QPen &pen)
     return pixmap;
 }
 
+static void drawMisspellingUnderline( QPainter* painter, QPen& pen, const QPointF& pos, qreal width, qreal descent, qreal underlinePosition )
+{
+    QTextCharFormat::UnderlineStyle     underlineStyle;
+    QLineF                              line(pos.x(), pos.y(), pos.x() + qFloor(width), pos.y());
+
+    qreal underlineOffset = underlinePosition;
+    qreal y = pos.y();
+    // compensate for different rounding rule in Core Graphics paint engine,
+    // ideally code like this should be moved to respective engines.
+    if (painter->paintEngine()->type() == QPaintEngine::CoreGraphics) {
+        y = qCeil(y);
+    }
+    // deliberately ceil the offset to avoid the underline coming too close to
+    // the text above it.
+    const qreal underlinePos = y + qCeil(underlineOffset);
+
+    underlineStyle = QTextCharFormat::UnderlineStyle(QApplication::style()->styleHint(QStyle::SH_SpellCheckUnderlineStyle));
+
+    if (underlineStyle == QTextCharFormat::WaveUnderline) {
+        painter->save();
+        painter->translate(0, pos.y() + 1);
+
+        pen.setColor( Qt::red );
+
+        // Adapt wave to underlineOffset or pen width, whatever is larger, to make it work on all platforms
+        //const QPixmap wave = generateWavyPixmap(qMax(underlineOffset, pen.widthF()), pen);
+        const QPixmap wave = generateWavyPixmap(descent / 2.0, pen);
+
+        painter->setBrushOrigin(painter->brushOrigin().x(), 0);
+        painter->fillRect(pos.x(), 0, qCeil(width), qMin(wave.height(), (int) descent), wave);
+        painter->restore();
+    } else if (underlineStyle != QTextCharFormat::NoUnderline) {
+        painter->save();
+        QLineF underLine(line.x1(), underlinePos, line.x2(), underlinePos);
+
+        pen.setColor( Qt::red );
+
+        pen.setStyle((Qt::PenStyle)(underlineStyle));
+        painter->setPen(pen);
+        painter->drawLine(underLine);
+        painter->restore();
+    }
+}
+
 static void drawTextItemDecoration(QPainter *painter, const QPointF &pos, const QFontEngine *fe,
                                    QTextCharFormat::UnderlineStyle underlineStyle,
                                    QTextItem::RenderFlags flags, qreal width,
                                    const QTextCharFormat &charFormat)
 {
     if (underlineStyle == QTextCharFormat::NoUnderline
+        && charFormat.misspelling() == false
         && !(flags & (QTextItem::StrikeOut | QTextItem::Overline)))
         return;
 
@@ -6513,6 +6558,11 @@ static void drawTextItemDecoration(QPainter *painter, const QPointF &pos, const 
         pen.setStyle((Qt::PenStyle)(underlineStyle));
         painter->setPen(pen);
         painter->drawLine(underLine);
+    }
+
+    if( charFormat.misspelling() == true )
+    {
+        drawMisspellingUnderline( painter, pen, pos, width, fe->descent().toReal(), underlinePos );
     }
 
     pen.setStyle(Qt::SolidLine);
