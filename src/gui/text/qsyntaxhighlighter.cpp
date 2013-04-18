@@ -489,7 +489,7 @@ void QSyntaxHighlighter::setFormat(int start, int count, const QTextCharFormat &
 
     const int end = qMin(start + count, d->formatChanges.count());
     for (int i = start; i < end; ++i)
-        d->formatChanges[i] = format;
+        d->formatChanges[i].merge( format );
 }
 
 /*!
