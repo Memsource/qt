@@ -6458,19 +6458,15 @@ static void drawMisspellingUnderline( QPainter* painter, QPen& pen, const QPoint
     QTextCharFormat::UnderlineStyle     underlineStyle;
     QLineF                              line(pos.x(), pos.y(), pos.x() + qFloor(width), pos.y());
 
-    qreal underlineOffset = underlinePosition;
     qreal y = pos.y();
     // compensate for different rounding rule in Core Graphics paint engine,
     // ideally code like this should be moved to respective engines.
     if (painter->paintEngine()->type() == QPaintEngine::CoreGraphics) {
         y = qCeil(y);
     }
-    // deliberately ceil the offset to avoid the underline coming too close to
-    // the text above it.
-    const qreal underlinePos = y + qCeil(underlineOffset);
-
+    
     underlineStyle = QTextCharFormat::UnderlineStyle(QApplication::style()->styleHint(QStyle::SH_SpellCheckUnderlineStyle));
-
+    
     if (underlineStyle == QTextCharFormat::WaveUnderline) {
         painter->save();
         painter->translate(0, pos.y() + 1);
@@ -6486,7 +6482,7 @@ static void drawMisspellingUnderline( QPainter* painter, QPen& pen, const QPoint
         painter->restore();
     } else if (underlineStyle != QTextCharFormat::NoUnderline) {
         painter->save();
-        QLineF underLine(line.x1(), underlinePos, line.x2(), underlinePos);
+        QLineF underLine(line.x1(), underlinePosition, line.x2(), underlinePosition);
 
         pen.setColor( Qt::red );
 
