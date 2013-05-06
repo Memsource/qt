@@ -2737,7 +2737,10 @@ void QTextControlPrivate::activateLinkUnderCursor(QString href)
 #ifndef QT_NO_TOOLTIP
 void QTextControlPrivate::showToolTip(const QPoint &globalPos, const QPointF &pos, QWidget *contextWidget)
 {
-    const QString toolTip = q_func()->cursorForPosition(pos).charFormat().toolTip();
+    QTextCursor     cursor = q_func()->cursorForPosition(pos);
+    cursor.movePosition( QTextCursor::Right );
+
+    const QString toolTip = cursor.charFormat().toolTip();
     if (toolTip.isEmpty())
         return;
     QToolTip::showText(globalPos, toolTip, contextWidget);
