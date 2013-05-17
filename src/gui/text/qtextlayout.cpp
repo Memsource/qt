@@ -2371,8 +2371,10 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
             if (selection)
                 format.merge(selection->format);
 
-            setPenAndDrawBackground(p, pen, format, QRectF(iterator.x.toReal(), (y - lineBase).toReal(),
-                                                           iterator.itemWidth.toReal(), line.height().toReal()));
+            setPenAndDrawBackground(p, pen, format, QRectF(iterator.x.toReal(), (y - si.ascent).toReal(),
+                                                           iterator.itemWidth.toReal(), (si.ascent + si.descent).toReal() + 1.0));
+            /*setPenAndDrawBackground(p, pen, format, QRectF(iterator.x.toReal(), (y - lineBase).toReal(),
+                                                           iterator.itemWidth.toReal(), line.height().toReal()));*/
 
             QTextCharFormat::VerticalAlignment valign = format.verticalAlignment();
             if (valign == QTextCharFormat::AlignSuperScript || valign == QTextCharFormat::AlignSubScript) {
