@@ -2462,6 +2462,8 @@ bool QTextEngine::atWordSeparator(int position) const
     case 0xFF07:
     case 0xFF62:
     case 0xFF63:
+    // Special characters
+    case QChar::ObjectReplacementCharacter:
         return true;
     default:
     {
