@@ -1637,7 +1637,7 @@ namespace {
 
         inline void adjustRightBearing()
         {
-            if (currentPosition <= 0)
+            if (currentPosition <= 0 || glyphs.numGlyphs == 0)
                 return;
             adjustRightBearing(currentGlyph());
         }
