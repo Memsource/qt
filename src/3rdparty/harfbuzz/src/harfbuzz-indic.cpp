@@ -833,7 +833,7 @@ static const unsigned char indicPosition[0xe00-0x900] = {
     None, None, None, None,
     None, None, None, Post,
 
-    Pre, None, Below, None,
+    Post, None, Below, None,
     None, Post, None, None,
     None, None, None, None,
     None, None, Post, Post,
@@ -1661,6 +1661,39 @@ static bool indic_shape_syllable(HB_Bool openType, HB_ShaperItem *item, bool inv
                 for (i = 0; i < basePos; ++i)
                     otl_glyphs[i] = otl_glyphs[i+1];
                 otl_glyphs[basePos] = m;
+            }
+        }
+
+        // Move the combined glyph for Ra + H before the base
+        // glyph for Malayalam script
+        if((script == HB_Script_Malayalam))
+        {
+            for(i = 0; i < len; i++)
+            {
+                if(form(reordered[i]) == Consonant)
+                {
+                    if(i+2 < len)
+                    {
+                        if(reordered[i+1] == ra && reordered[i+2] == halant)
+                        {
+                            // Find the base glyph in the shaped string
+                            int basePos = 0;
+                            while (basePos < newLen && (int)otl_glyphs[basePos].cluster <= base)
+                                basePos++;
+                            --basePos;
+
+                            // If there has been a ligature substitution, then there is
+                            // no need to reposition Ra+H glyph before the base glyph
+                            if((int)otl_glyphs[basePos].ligID != 0)
+                                break;
+                            HB_GlyphItemRec m = otl_glyphs[basePos];
+                            otl_glyphs[basePos] = otl_glyphs[basePos+1];
+                            otl_glyphs[basePos+1] = m;
+                        }
+                    }
+                    else
+                        break;
+                }
             }
         }
 
