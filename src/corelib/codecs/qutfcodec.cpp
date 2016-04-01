@@ -48,6 +48,8 @@ QT_BEGIN_NAMESPACE
 
 enum { Endian = 0, Data = 1 };
 
+const bool allowNonCharacters = true;
+
 static inline bool isUnicodeNonCharacter(uint ucs4)
 {
     // Unicode has a couple of "non-characters" that one can use internally,
@@ -120,7 +122,7 @@ QByteArray QUtf8::convertFromUnicode(const QChar *uc, int len, QTextCodec::Conve
                 *cursor++ = 0xc0 | ((uchar) (u >> 6));
             } else {
                 // is it one of the Unicode non-characters?
-                if (isUnicodeNonCharacter(u)) {
+                if (!allowNonCharacters && isUnicodeNonCharacter( u )) {
                     *cursor++ = replacement;
                     ++ch;
                     ++invalid;
@@ -196,7 +198,7 @@ QString QUtf8::convertToUnicode(const char *chars, int len, QTextCodec::Converte
                     bool nonCharacter;
                     if (!headerdone && uc == 0xfeff) {
                         // don't do anything, just skip the BOM
-                    } else if (!(nonCharacter = isUnicodeNonCharacter(uc)) && uc > 0xffff && uc < 0x110000) {
+                    } else if (!(nonCharacter = (!allowNonCharacters && isUnicodeNonCharacter(uc))) && uc > 0xffff && uc < 0x110000) {
                         // surrogate pair
                         Q_ASSERT((qch - (ushort*)result.unicode()) + 2 < result.length());
                         *qch++ = QChar::highSurrogate(uc);
