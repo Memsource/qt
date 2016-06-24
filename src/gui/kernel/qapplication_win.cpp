@@ -807,6 +807,15 @@ void qt_init(QApplicationPrivate *priv, int)
     GdiSetBatchLimit(1);
 #endif
 
+#ifndef Q_OS_WINCE
+    QSystemLibrary user32( QLatin1String( "user32" ) );
+
+    // Notify Vista and Windows 7 that we support highter DPI settings
+    ptrSetProcessDPIAware = ( PtrSetProcessDPIAware ) user32.resolve( "SetProcessDPIAware" );
+    if ( ptrSetProcessDPIAware )
+        ptrSetProcessDPIAware();
+#endif
+
     // initialize key mapper
     QKeyMapper::changeKeyboard();
 
@@ -855,17 +864,11 @@ void qt_init(QApplicationPrivate *priv, int)
     qt_win_initialize_directdraw();
 
 #ifndef Q_OS_WINCE
-    QSystemLibrary user32(QLatin1String("user32"));
     ptrUpdateLayeredWindowIndirect = (PtrUpdateLayeredWindowIndirect)user32.resolve("UpdateLayeredWindowIndirect");
     ptrUpdateLayeredWindow = (PtrUpdateLayeredWindow)user32.resolve("UpdateLayeredWindow");
 
     if (ptrUpdateLayeredWindow && !ptrUpdateLayeredWindowIndirect)
         ptrUpdateLayeredWindowIndirect = qt_updateLayeredWindowIndirect;
-
-    // Notify Vista and Windows 7 that we support highter DPI settings
-    ptrSetProcessDPIAware = (PtrSetProcessDPIAware)user32.resolve("SetProcessDPIAware");
-    if (ptrSetProcessDPIAware)
-        ptrSetProcessDPIAware();
 #endif
 
 #ifndef QT_NO_GESTURES
