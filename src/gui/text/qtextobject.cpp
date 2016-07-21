@@ -1097,6 +1097,14 @@ QTextBlockFormat QTextBlock::blockFormat() const
     return p->formatCollection()->blockFormat(p->blockMap().fragment(n)->format);
 }
 
+Qt::LayoutDirection QTextBlock::blockFormatLayoutDirection() const
+{
+	//if (!p || !n) 
+	return Qt::LayoutDirection::LeftToRight;
+
+	//return p->formatCollection()->blockFormat();
+}
+
 /*!
     Returns an index into the document's internal list of block formats
     for the text block's format.
@@ -1153,7 +1161,8 @@ int QTextBlock::charFormatIndex() const
 */
 Qt::LayoutDirection QTextBlock::textDirection() const
 {
-    Qt::LayoutDirection dir = blockFormat().layoutDirection();
+    //Qt::LayoutDirection dir = blockFormat().layoutDirection();
+	Qt::LayoutDirection dir = blockFormatLayoutDirection();
     if (dir != Qt::LayoutDirectionAuto)
         return dir;
 

@@ -127,7 +127,7 @@ public:
         PreviousRow
     };
 
-    bool movePosition(MoveOperation op, MoveMode = MoveAnchor, int n = 1);
+    bool movePosition(MoveOperation op, MoveMode = MoveAnchor, int n = 1, bool ignoreX = false);
 
     bool visualNavigation() const;
     void setVisualNavigation(bool b);
@@ -162,7 +162,7 @@ public:
 
     QTextBlock block() const;
 
-    QTextCharFormat charFormat() const;
+    QTextCharFormat charFormat(bool dontCleanIndex = false) const;
     void setCharFormat(const QTextCharFormat &format);
     void mergeCharFormat(const QTextCharFormat &modifier);
 
@@ -210,7 +210,7 @@ public:
 
     void beginEditBlock();
     void joinPreviousEditBlock();
-    void endEditBlock();
+    void endEditBlock( bool readOnly = false );
 
     bool operator!=(const QTextCursor &rhs) const;
     bool operator<(const QTextCursor &rhs) const;

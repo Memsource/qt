@@ -205,7 +205,7 @@ public:
     void appendUndoItem(QAbstractUndoItem *);
     inline void beginEditBlock() { if (0 == editBlock++) ++revision; }
     void joinPreviousEditBlock();
-    void endEditBlock();
+    void endEditBlock( bool readOnly = false );
     void finishEdit();
     inline bool isInEditBlock() const { return editBlock; }
     void enableUndoRedo(bool enable);

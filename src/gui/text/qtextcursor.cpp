@@ -357,17 +357,22 @@ void QTextCursorPrivate::aboutToRemoveCell(int from, int to)
     }
 }
 
-bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode)
+bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode, bool ignoreX)
 {
     currentCharFormat = -1;
     bool adjustX = true;
-    QTextBlock blockIt = block();
+
+	if ( !lastBlockIt.isValid() )
+	{
+		lastBlockIt = block();
+	}
+    //QTextBlock blockIt = block();
     bool visualMovement = priv->defaultCursorMoveStyle == Qt::VisualMoveStyle;
 
-    if (!blockIt.isValid())
+    if (!lastBlockIt.isValid())
         return false;
 
-    if (blockIt.textDirection() == Qt::RightToLeft) {
+    if (lastBlockIt.textDirection() == Qt::RightToLeft) {
         if (op == QTextCursor::WordLeft)
             op = QTextCursor::NextWord;
         else if (op == QTextCursor::WordRight)
@@ -381,8 +386,8 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         }
     }
 
-    const QTextLayout *layout = blockLayout(blockIt);
-    int relativePos = position - blockIt.position();
+    const QTextLayout *layout = blockLayout(lastBlockIt);
+    int relativePos = position - lastBlockIt.position();
     QTextLine line;
     if (!priv->isInEditBlock())
         line = layout->lineForTextPosition(relativePos);
@@ -391,7 +396,7 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
 
     int newPosition = position;
 
-    if (x == -1 && !priv->isInEditBlock() && (op == QTextCursor::Up || op == QTextCursor::Down))
+    if (!ignoreX && x == -1 && !priv->isInEditBlock() && (op == QTextCursor::Up || op == QTextCursor::Down))
         setX();
 
     switch(op) {
@@ -402,22 +407,22 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         newPosition = 0;
         break;
     case QTextCursor::StartOfLine: {
-        newPosition = blockIt.position();
+        newPosition = lastBlockIt.position();
         if (line.isValid())
             newPosition += line.textStart();
 
         break;
     }
     case QTextCursor::StartOfBlock: {
-        newPosition = blockIt.position();
+        newPosition = lastBlockIt.position();
         break;
     }
     case QTextCursor::PreviousBlock: {
-        if (blockIt == priv->blocksBegin())
+        if (lastBlockIt == priv->blocksBegin())
             return false;
-        blockIt = blockIt.previous();
+        lastBlockIt = lastBlockIt.previous();
 
-        newPosition = blockIt.position();
+        newPosition = lastBlockIt.position();
         break;
     }
     case QTextCursor::PreviousCharacter:
@@ -445,11 +450,11 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         // skip if already at word start
         QTextEngine *engine = layout->engine();
         engine->attributes();
-        if ((relativePos == blockIt.length() - 1)
+        if ((relativePos == lastBlockIt.length() - 1)
             && (engine->atSpace(relativePos - 1) || engine->atWordSeparator(relativePos - 1)))
             return false;
 
-        if (relativePos < blockIt.length()-1)
+        if (relativePos < lastBlockIt.length()-1)
             ++position;
 
         // FALL THROUGH!
@@ -461,9 +466,9 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
     case QTextCursor::Up: {
         int i = line.lineNumber() - 1;
         if (i == -1) {
-            if (blockIt == priv->blocksBegin())
+            if (lastBlockIt == priv->blocksBegin())
                 return false;
-            int blockPosition = blockIt.position();
+            int blockPosition = lastBlockIt.position();
             QTextTable *table = qobject_cast<QTextTable *>(priv->frameAt(blockPosition));
             if (table) {
                 QTextTableCell cell = table->cellAt(blockPosition);
@@ -475,21 +480,21 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
                         // move to line above the table
                         blockPosition = table->firstPosition() - 1;
                     }
-                    blockIt = priv->blocksFind(blockPosition);
+                    lastBlockIt = priv->blocksFind(blockPosition);
                 } else {
-                    blockIt = blockIt.previous();
+                    lastBlockIt = lastBlockIt.previous();
                 }
             } else {
-                blockIt = blockIt.previous();
+                lastBlockIt = lastBlockIt.previous();
             }
-            layout = blockLayout(blockIt);
+            layout = blockLayout(lastBlockIt);
             i = layout->lineCount()-1;
         }
         if (layout->lineCount()) {
             QTextLine line = layout->lineAt(i);
-            newPosition = line.xToCursor(x) + blockIt.position();
+            newPosition = line.xToCursor(x) + lastBlockIt.position();
         } else {
-            newPosition = blockIt.position();
+            newPosition = lastBlockIt.position();
         }
         adjustX = false;
         break;
@@ -500,14 +505,14 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         break;
     case QTextCursor::EndOfLine: {
         if (!line.isValid() || line.textLength() == 0) {
-            if (blockIt.length() >= 1)
+            if (lastBlockIt.length() >= 1)
                 // position right before the block separator
-                newPosition = blockIt.position() + blockIt.length() - 1;
+                newPosition = lastBlockIt.position() + lastBlockIt.length() - 1;
             break;
         }
-        newPosition = blockIt.position() + line.textStart() + line.textLength();
+        newPosition = lastBlockIt.position() + line.textStart() + line.textLength();
         if (line.lineNumber() < layout->lineCount() - 1) {
-            const QString text = blockIt.text();
+            const QString text = lastBlockIt.text();
             // ###### this relies on spaces being the cause for linebreaks.
             // this doesn't work with japanese
             if (text.at(line.textStart() + line.textLength() - 1).isSpace())
@@ -518,7 +523,7 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
     case QTextCursor::EndOfWord: {
         QTextEngine *engine = layout->engine();
         engine->attributes();
-        const int len = blockIt.length() - 1;
+        const int len = lastBlockIt.length() - 1;
         if (relativePos >= len)
             return false;
         if (engine->atWordSeparator(relativePos)) {
@@ -529,20 +534,20 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
             while (relativePos < len && !engine->atSpace(relativePos) && !engine->atWordSeparator(relativePos))
                 ++relativePos;
         }
-        newPosition = blockIt.position() + relativePos;
+        newPosition = lastBlockIt.position() + relativePos;
         break;
     }
     case QTextCursor::EndOfBlock:
-        if (blockIt.length() >= 1)
+        if (lastBlockIt.length() >= 1)
             // position right before the block separator
-            newPosition = blockIt.position() + blockIt.length() - 1;
+            newPosition = lastBlockIt.position() + lastBlockIt.length() - 1;
         break;
     case QTextCursor::NextBlock: {
-        blockIt = blockIt.next();
-        if (!blockIt.isValid())
+        lastBlockIt = lastBlockIt.next();
+        if (!lastBlockIt.isValid())
             return false;
 
-        newPosition = blockIt.position();
+        newPosition = lastBlockIt.position();
         break;
     }
     case QTextCursor::NextCharacter:
@@ -572,7 +577,7 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         int i = line.lineNumber() + 1;
 
         if (i >= layout->lineCount()) {
-            int blockPosition = blockIt.position() + blockIt.length() - 1;
+            int blockPosition = lastBlockIt.position() + lastBlockIt.length() - 1;
             QTextTable *table = qobject_cast<QTextTable *>(priv->frameAt(blockPosition));
             if (table) {
                 QTextTableCell cell = table->cellAt(blockPosition);
@@ -584,24 +589,24 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
                         // move to line below the table
                         blockPosition = table->lastPosition() + 1;
                     }
-                    blockIt = priv->blocksFind(blockPosition);
+                    lastBlockIt = priv->blocksFind(blockPosition);
                 } else {
-                    blockIt = blockIt.next();
+                    lastBlockIt = lastBlockIt.next();
                 }
             } else {
-                blockIt = blockIt.next();
+                lastBlockIt = lastBlockIt.next();
             }
 
-            if (blockIt == priv->blocksEnd())
+            if (lastBlockIt == priv->blocksEnd())
                 return false;
-            layout = blockLayout(blockIt);
+            layout = blockLayout(lastBlockIt);
             i = 0;
         }
         if (layout->lineCount()) {
             QTextLine line = layout->lineAt(i);
-            newPosition = line.xToCursor(x) + blockIt.position();
+            newPosition = line.xToCursor(x) + lastBlockIt.position();
         } else {
-            newPosition = blockIt.position();
+            newPosition = lastBlockIt.position();
         }
         adjustX = false;
         break;
@@ -677,7 +682,7 @@ bool QTextCursorPrivate::movePosition(QTextCursor::MoveOperation op, QTextCursor
         adjustCursor(op);
     }
 
-    if (adjustX)
+    if (!ignoreX && adjustX)
         setX();
 
     return moved;
@@ -1240,7 +1245,7 @@ int QTextCursor::anchor() const
 
     \sa setVisualNavigation()
 */
-bool QTextCursor::movePosition(MoveOperation op, MoveMode mode, int n)
+bool QTextCursor::movePosition(MoveOperation op, MoveMode mode, int n, bool ignoreX)
 {
     if (!d || !d->priv)
         return false;
@@ -1256,7 +1261,7 @@ bool QTextCursor::movePosition(MoveOperation op, MoveMode mode, int n)
 
     int previousPosition = d->position;
     for (; n > 0; --n) {
-        if (!d->movePosition(op, mode))
+        if (!d->movePosition(op, mode, ignoreX))
             return false;
     }
 
@@ -1273,7 +1278,7 @@ bool QTextCursor::movePosition(MoveOperation op, MoveMode mode, int n)
         }
         if (mode == QTextCursor::MoveAnchor)
             d->anchor = d->position;
-        while (d->movePosition(op, mode)
+        while (d->movePosition(op, mode, ignoreX)
                && !d->block().isVisible())
             ;
 
@@ -1875,7 +1880,7 @@ void QTextCursor::mergeBlockCharFormat(const QTextCharFormat &modifier)
 
     \sa insertText(), blockFormat()
  */
-QTextCharFormat QTextCursor::charFormat() const
+QTextCharFormat QTextCursor::charFormat(bool dontCleanIndex) const
 {
     if (!d || !d->priv)
         return QTextCharFormat();
@@ -1903,7 +1908,10 @@ QTextCharFormat QTextCursor::charFormat() const
     }
 
     QTextCharFormat cfmt = d->priv->formatCollection()->charFormat(idx);
-    cfmt.clearProperty(QTextFormat::ObjectIndex);
+	if ( !dontCleanIndex )
+	{
+		cfmt.clearProperty(QTextFormat::ObjectIndex);
+	}
 
     Q_ASSERT(cfmt.isValid());
     return cfmt;
@@ -2509,12 +2517,12 @@ void QTextCursor::joinPreviousEditBlock()
     \sa beginEditBlock()
  */
 
-void QTextCursor::endEditBlock()
+void QTextCursor::endEditBlock( bool readOnly )
 {
     if (!d || !d->priv)
         return;
 
-    d->priv->endEditBlock();
+    d->priv->endEditBlock( readOnly );
 }
 
 /*!

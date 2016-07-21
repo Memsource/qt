@@ -88,7 +88,7 @@ public:
     bool canDelete(int pos) const;
 
     void insertBlock(const QTextBlockFormat &format, const QTextCharFormat &charFormat);
-    bool movePosition(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode = QTextCursor::MoveAnchor);
+    bool movePosition(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode = QTextCursor::MoveAnchor, bool ignoreX = false);
 
     inline QTextBlock block() const
         { return QTextBlock(priv, priv->blockMap().findNode(position)); }
@@ -115,6 +115,8 @@ public:
     uint visualNavigation : 1;
     uint keepPositionOnInsert : 1;
     uint changed : 1;
+
+	QTextBlock lastBlockIt;
 };
 
 QT_END_NAMESPACE

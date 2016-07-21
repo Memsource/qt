@@ -218,6 +218,7 @@ public:
     QTextLayout *layout() const;
     void clearLayout();
     QTextBlockFormat blockFormat() const;
+	Qt::LayoutDirection blockFormatLayoutDirection() const;
     int blockFormatIndex() const;
     QTextCharFormat charFormat() const;
     int charFormatIndex() const;

@@ -1181,10 +1181,10 @@ void QTextDocumentPrivate::joinPreviousEditBlock()
         undoStack[undoState - 1].block_end = false;
 }
 
-void QTextDocumentPrivate::endEditBlock()
+void QTextDocumentPrivate::endEditBlock( bool readOnly )
 {
     Q_ASSERT(editBlock > 0);
-    if (--editBlock)
+    if (--editBlock || readOnly)
         return;
 
     if (undoEnabled && undoState > 0) {
