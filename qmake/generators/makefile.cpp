@@ -1462,6 +1462,118 @@ MakefileGenerator::valList(const QStringList &varList)
 }
 
 QStringList
+MakefileGenerator::fileFixify2(const QStringList &files, FileFixifyTypes fix, bool canon) const
+{
+    if(files.isEmpty())
+        return files;
+    QStringList ret;
+    for(QStringList::ConstIterator it = files.begin(); it != files.end(); ++it) {
+        if(!(*it).isEmpty())
+            ret << fileFixify2((*it), fix, canon);
+    }
+    return ret;
+}
+
+QString
+MakefileGenerator::fileFixify2(const QString &file, FileFixifyTypes fix, bool canon) const
+{
+    if(file.isEmpty())
+        return file;
+    QString ret = file;
+
+    //do the fixin'
+    QString orig_file = ret;
+    if(ret.startsWith(QLatin1Char('~'))) {
+        if(ret.startsWith(QLatin1String("~/")))
+            ret = QDir::homePath() + ret.mid(1);
+        else
+            warn_msg(WarnLogic, "Unable to expand ~ in %s", ret.toLatin1().constData());
+    }
+    if ((fix & FileFixifyAbsolute)
+            || (!(fix & FileFixifyRelative) && project->isActiveConfig("no_fixpath"))) {
+        if ((fix & FileFixifyAbsolute) && QDir::isRelativePath(ret)) {
+            QString pwd = !(fix & FileFixifyFromOutdir) ? project->projectDir() : Option::output_dir;
+            {
+                QFileInfo in_fi(fileInfo(pwd));
+                if (in_fi.exists())
+                    pwd = in_fi.canonicalFilePath();
+            }
+            if (!pwd.endsWith(QLatin1Char('/')))
+                pwd += QLatin1Char('/');
+            ret.prepend(pwd);
+        }
+        ret = Option::fixPathToTargetOS(ret, false, canon);
+    } else { //fix it..
+        QString out_dir = (fix & FileFixifyToIndir) ? project->projectDir() : Option::output_dir;
+        QString in_dir  = !(fix & FileFixifyFromOutdir) ? project->projectDir() : Option::output_dir;
+        {
+            QFileInfo in_fi(fileInfo(in_dir));
+            if(in_fi.exists())
+                in_dir = in_fi.canonicalFilePath();
+            QFileInfo out_fi(fileInfo(out_dir));
+            if(out_fi.exists())
+                out_dir = out_fi.canonicalFilePath();
+        }
+
+        QString qfile(Option::normalizePath(ret));
+        QFileInfo qfileinfo(fileInfo(qfile));
+        if(out_dir != in_dir || !qfileinfo.isRelative()) {
+            if(qfileinfo.isRelative()) {
+                ret = in_dir + "/" + qfile;
+                qfileinfo.setFile(ret);
+            }
+            ret = Option::fixPathToTargetOS(ret, false, canon);
+            QString match_dir = Option::fixPathToTargetOS(out_dir, false, canon);
+            if(ret == match_dir) {
+                ret = "";
+            } else if(ret.startsWith(match_dir + Option::dir_sep)) {
+                ret = ret.mid(match_dir.length() + Option::dir_sep.length());
+            } else {
+                //figure out the depth
+                int depth = 4;
+                if(Option::qmake_mode == Option::QMAKE_GENERATE_MAKEFILE ||
+                   Option::qmake_mode == Option::QMAKE_GENERATE_PRL) {
+                    if(project && !project->isEmpty("QMAKE_PROJECT_DEPTH"))
+                        depth = project->first("QMAKE_PROJECT_DEPTH").toInt();
+                    else if(Option::mkfile::cachefile_depth != -1)
+                        depth = Option::mkfile::cachefile_depth;
+                }
+                //calculate how much can be removed
+                QString dot_prefix;
+                for(int i = 1; i <= depth; i++) {
+                    int sl = match_dir.lastIndexOf(Option::dir_sep);
+                    if(sl == -1)
+                        break;
+                    match_dir = match_dir.left(sl);
+                    if(match_dir.isEmpty())
+                        break;
+                    if(ret.startsWith(match_dir + Option::dir_sep)) {
+                        //concat
+                        int remlen = ret.length() - (match_dir.length() + 1);
+                        if(remlen < 0)
+                            remlen = 0;
+                        ret = ret.right(remlen);
+                        //prepend
+                        for(int o = 0; o < i; o++)
+                            dot_prefix += ".." + Option::dir_sep;
+                        break;
+                    }
+                }
+                ret.prepend(dot_prefix);
+            }
+        } else {
+            ret = Option::fixPathToTargetOS(ret, false, canon);
+        }
+    }
+    if(ret.isEmpty())
+        ret = ".";
+    debug_msg(3, "Fixed[%d,%d] %s :: to :: %s [%s::%s]",
+              int(fix), canon, orig_file.toLatin1().constData(), ret.toLatin1().constData(),
+              qmake_getpwd().toLatin1().constData(), Option::output_dir.toLatin1().constData());
+    return ret;
+}
+
+QStringList
 MakefileGenerator::createObjectList(const QStringList &sources)
 {
     QStringList ret;
@@ -1469,13 +1581,43 @@ MakefileGenerator::createObjectList(const QStringList &sources)
     if(!project->values("OBJECTS_DIR").isEmpty())
         objdir = project->first("OBJECTS_DIR");
     for(QStringList::ConstIterator it = sources.begin(); it != sources.end(); ++it) {
+        QString sfn = (*it);
         QFileInfo fi(fileInfo(Option::fixPathToLocalOS((*it))));
         QString dir;
-        if(objdir.isEmpty() && project->isActiveConfig("object_with_source")) {
-            QString fName = Option::fixPathToTargetOS((*it), false);
-            int dl = fName.lastIndexOf(Option::dir_sep);
-            if(dl != -1)
-                dir = fName.left(dl + 1);
+        //objdir.isEmpty() &&
+//        if( project->isActiveConfig("object_with_source")) {
+//            QString fName = Option::fixPathToTargetOS((*it), false);
+//            
+//            fprintf(stderr, "fName:%s\n", fName.toLatin1().constData());
+//            int dl = fName.lastIndexOf(Option::dir_sep);
+//            if(dl != -1)
+//                dir = fName.left(dl + 1);
+//        } else {
+//            dir = objdir;
+//        }
+
+       if (project->isActiveConfig("object_parallel_to_source")) {
+            // The source paths are relative to the output dir, but we need source-relative paths
+            QString sourceRelativePath = fileFixify2(sfn, FileFixifyBackwards);
+
+            if (sourceRelativePath.startsWith(".." + Option::dir_sep))
+                sourceRelativePath = fileFixify2(sourceRelativePath, FileFixifyAbsolute);
+
+            if (QDir::isAbsolutePath(sourceRelativePath))
+                sourceRelativePath.remove(0, sourceRelativePath.indexOf(Option::dir_sep) + 1);
+
+            dir = objdir; // We still respect OBJECTS_DIR
+
+            int lastDirSepPosition = sourceRelativePath.lastIndexOf(Option::dir_sep);
+            if (lastDirSepPosition != -1)
+                dir += sourceRelativePath.leftRef(lastDirSepPosition + 1);
+
+            if (!noIO()) {
+                // Ensure that the final output directory of each object exists
+                QString outRelativePath = fileFixify2(dir, FileFixifyBackwards);
+                if (!mkdir(outRelativePath))
+                    warn_msg(WarnLogic, "Cannot create directory '%s'", outRelativePath.toLatin1().constData());
+            }
         } else {
             dir = objdir;
         }

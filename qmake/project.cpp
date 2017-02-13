@@ -1274,6 +1274,11 @@ QMakeProject::read(const QString &file, QMap<QString, QStringList> &place)
 bool
 QMakeProject::read(const QString &project, uchar cmd)
 {
+    QString absproj = (project == QLatin1String("-"))
+            ? QLatin1String("(stdin)")
+            : QDir::cleanPath(QDir(qmake_getpwd()).absoluteFilePath(project));
+    m_projectDir = QFileInfo(absproj).path();
+    
     pfile = QFileInfo(project).absoluteFilePath();
     return read(cmd);
 }

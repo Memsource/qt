@@ -621,6 +621,70 @@ bool Option::postProcessProject(QMakeProject *project)
 }
 
 QString
+Option::fixString2(QString string, uchar flags)
+{
+    //const QString orig_string = string;
+    static QHash<FixStringCacheKey, QString> *cache = 0;
+    if(!cache) {
+        cache = new QHash<FixStringCacheKey, QString>;
+        qmakeAddCacheClear(qmakeDeleteCacheClear<QHash<FixStringCacheKey, QString> >, (void**)&cache);
+    }
+    FixStringCacheKey cacheKey(string, flags);
+
+    QHash<FixStringCacheKey, QString>::const_iterator it = cache->constFind(cacheKey);
+
+    if (it != cache->constEnd()) {
+        //qDebug() << "Fix (cached) " << orig_string << "->" << it.value();
+        return it.value();
+    }
+
+    //fix the environment variables
+    if(flags & Option::FixEnvVars) {
+        int rep;
+        static QRegExp reg_var("\\$\\(.*\\)");
+        reg_var.setMinimal(true);
+        while((rep = reg_var.indexIn(string)) != -1)
+            string.replace(rep, reg_var.matchedLength(),
+                           QString::fromLocal8Bit(qgetenv(string.mid(rep + 2, reg_var.matchedLength() - 3).toLatin1().constData()).constData()));
+    }
+
+    //canonicalize it (and treat as a path)
+    if(flags & Option::FixPathCanonicalize) {
+#if 0
+        string = QFileInfo(string).canonicalFilePath();
+#endif
+        string = QDir::cleanPath(string);
+    }
+
+    // either none or only one active flag
+    Q_ASSERT(((flags & Option::FixPathToLocalSeparators) != 0) +
+             ((flags & Option::FixPathToTargetSeparators) != 0) +
+             ((flags & Option::FixPathToNormalSeparators) != 0) <= 1);
+
+    //fix separators
+    if (flags & Option::FixPathToNormalSeparators) {
+        string.replace('\\', '/');
+    } else if (flags & Option::FixPathToLocalSeparators) {
+#if defined(Q_OS_WIN32)
+        string.replace('/', '\\');
+#else
+        string.replace('\\', '/');
+#endif
+    } else if(flags & Option::FixPathToTargetSeparators) {
+        string.replace('/', Option::dir_sep).replace('\\', Option::dir_sep);
+    }
+
+    if ((string.startsWith("\"") && string.endsWith("\"")) ||
+        (string.startsWith("\'") && string.endsWith("\'")))
+        string = string.mid(1, string.length()-2);
+
+    //cache
+    //qDebug() << "Fix" << orig_string << "->" << string;
+    cache->insert(cacheKey, string);
+    return string;
+}
+
+QString
 Option::fixString(QString string, uchar flags)
 {
     //const QString orig_string = string;

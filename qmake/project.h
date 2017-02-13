@@ -78,6 +78,7 @@ class QMakeProject
     FunctionBlock *function;
     QMap<QString, FunctionBlock*> testFunctions, replaceFunctions;
 
+    QString m_projectDir;
     bool recursive;
     bool own_prop;
     bool backslashWarned;
@@ -126,6 +127,7 @@ public:
     QStringList userExpandFunctions() { return replaceFunctions.keys(); }
     QStringList userTestFunctions() { return testFunctions.keys(); }
 
+    QString projectDir() const { return m_projectDir; }
     QString projectFile();
     inline QMakeProperty *properties() { return prop; }
 

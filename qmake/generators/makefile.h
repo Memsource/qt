@@ -225,7 +225,20 @@ protected:
     QString filePrefixRoot(const QString &, const QString &);
 
     //file fixification to unify all file names into a single pattern
-    enum FileFixifyType { FileFixifyAbsolute, FileFixifyRelative, FileFixifyDefault };
+    enum FileFixifyType {
+        FileFixifyFromIndir = 0,
+        FileFixifyFromOutdir = 1,
+        FileFixifyToOutDir = 0,
+        FileFixifyToIndir = 2,
+        FileFixifyBackwards = FileFixifyFromOutdir | FileFixifyToIndir,
+        FileFixifyDefault = 0,
+        FileFixifyAbsolute = 4,
+        FileFixifyRelative = 8
+    };
+    Q_DECLARE_FLAGS(FileFixifyTypes, FileFixifyType)
+    QString fileFixify2(const QString &file, FileFixifyTypes fix = FileFixifyDefault, bool canon = true) const;
+    QStringList fileFixify2(const QStringList &files, FileFixifyTypes fix = FileFixifyDefault, bool canon = true) const;
+
     QString fileFixify(const QString& file, const QString &out_dir=QString(),
                        const QString &in_dir=QString(), FileFixifyType fix=FileFixifyDefault, bool canon=true) const;
     inline QString fileFixify(const QString& file, FileFixifyType fix, bool canon=true) const

@@ -115,9 +115,11 @@ struct Option
         FixEnvVars              = 0x01,
         FixPathCanonicalize     = 0x02,
         FixPathToLocalSeparators  = 0x04,
-        FixPathToTargetSeparators = 0x08
+        FixPathToTargetSeparators = 0x08,
+        FixPathToNormalSeparators = 0x10
     };
     static QString fixString(QString string, uchar flags);
+    static QString fixString2(QString string, uchar flags);
 
     //and convenience functions
     inline static QString fixPathToLocalOS(const QString &in, bool fix_env=true, bool canonical=true)
@@ -145,6 +147,16 @@ struct Option
             if (str.endsWith(ext))
                 return true;
         return false;
+    }
+    
+    inline static QString normalizePath(const QString &in, bool fix_env=true, bool canonical=true)
+    {
+        uchar flags = FixPathToNormalSeparators;
+        if (fix_env)
+            flags |= FixEnvVars;
+        if (canonical)
+            flags |= FixPathCanonicalize;
+        return fixString2(in, flags);
     }
 
     //global qmake mode, can only be in one mode per invocation!
